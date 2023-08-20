@@ -2,12 +2,11 @@
 
 void getDistance(void)
 {
-    TRIGGER_PIN_ON;
 
     /* pull trigger pin HIGH for 10 microsecond */
-    if (ultrasonic_flag==1){
-    TRIGGER_PIN_OFF;
-    ultrasonic_flag=2;
+    if (ultrasonic_flag==0){
+    TRIGGER_PIN_ON;
+    ultrasonic_flag=1;
     }
     /* pull trigger pin LOW*/
 
@@ -109,10 +108,11 @@ void InterruptTimer0() __interrupt(1)
         EN2_OFF;
     }
 
-    if (sysTick - ultrasonic_timer >= 10 && ultrasonic_flag ==0) // 2HZ timer
+    if (sysTick - ultrasonic_timer >= 10 && ultrasonic_flag ==1) // 2HZ timer
     {
         ultrasonic_timer = sysTick;
-        ultrasonic_flag = 1;
+        TRIGGER_PIN_OFF;
+        ultrasonic_flag = 2;
     }
     
     if (ultrasonic_flag == 2 && !ECHO_PIN_CHECK)
@@ -417,9 +417,8 @@ int main(void)
         else
             stop();
 
-        if (ultrasonic_flag)
+        if (!ultrasonic_flag)
         {
-            ultrasonic_flag = 0;
             getDistance();
         }
 
