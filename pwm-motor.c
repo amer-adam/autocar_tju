@@ -115,19 +115,19 @@ void InterruptTimer0() __interrupt(1)
         ultrasonic_flag = 2;
     }
     
-    if (ultrasonic_flag == 2 && !ECHO_PIN_CHECK)
+    if (ultrasonic_flag == 2 && ECHO_PIN_CHECK)
     {
         TR1 = 1;
         ultrasonic_flag == 3;
     }
 
-    if (ultrasonic_flag == 3 && ECHO_PIN_CHECK)
+    if (ultrasonic_flag == 3 && !ECHO_PIN_CHECK)
     {
         TR1 = 0;
         ultrasonic_flag == 0;
+        distance = ((TL1 | (TH1 << 8)) * Clock_period * sound_velocity) / 2;
     }
     
-    distance = ((TL1 | (TH1 << 8)) * Clock_period * sound_velocity) / 2;
 
 
     TR0 = 1; // Start Timer 0
