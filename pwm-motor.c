@@ -70,7 +70,7 @@ void InterruptTimer0() __interrupt(1)
 {
     TR0 = 0; // Stop Timer 0
 
-    TL0 = 0xFC; // Load low byte of timer value
+    TL0 = 0xF5; // Load low byte of timer value
     TH0 = 0xFF; // Load high byte of timer value
 
     pwm_left++;  // Increment pwm_left counter
@@ -104,13 +104,14 @@ void InterruptTimer0() __interrupt(1)
     {
         EN2_OFF;
     }
+
     if (ultrasonic_flag == 0)
     {
         TRIGGER_PIN_ON;
         ultrasonic_flag = 1;
     }
 
-    if (sysTick - ultrasonic_timer >= 10 && ultrasonic_flag == 1) // 2HZ timer
+    if (sysTick - ultrasonic_timer >= 2.5 && ultrasonic_flag == 1) // 2HZ timer
     {
         ultrasonic_timer = sysTick;
         TRIGGER_PIN_OFF;
@@ -420,7 +421,7 @@ int main(void)
         //     getDistance();
         // }
 
-        if (distance <= 10)
+        if (distance >= 10)
         {
             // stop();
             bitclear(P1, 6);
