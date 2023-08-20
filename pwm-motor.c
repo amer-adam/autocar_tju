@@ -2,63 +2,23 @@
 
 void getDistance(void)
 {
-
-    /* pull trigger pin HIGH */
-    // char current;
-    // char count;
     TRIGGER_PIN_ON;
 
-    /* provide 10uS Delay*/
-    TL1 = 0xF5;
-    TH1 = 0xFF;
-    TR1 = 1;
-    while (TF1 == 0)
-        ;
-    TR1 = 0;
-    TF1 = 0;
-
-    /* pull trigger pin LOW*/
+    /* pull trigger pin HIGH for 10 microsecond */
+    if (ultrasonic_flag==1){
     TRIGGER_PIN_OFF;
+    ultrasonic_flag=2;
+    }
+    /* pull trigger pin LOW*/
 
-    while (!ECHO_PIN_CHECK){
-    if (!IR1 && !IR2 && !IR3 && !IR4) // 0000
-    {
-        forward();
-    }
-
-    if (!IR1 && !IR2 && IR3 && !IR4) // 0010
-    {
-        turnSlow(RIGHT);
-    }
-    
-    if (!IR1 && IR2 && !IR3 && !IR4) // 0100
-    {
-        turnSlow(LEFT);
-    }
-
-
-
-    }    /* Waiting for Echo */
-    TR1 = 1; /* Timer Starts */
-    while (ECHO_PIN_CHECK && !TF1){
-        if (!IR1 && !IR2 && !IR3 && !IR4) // 0000
-    {
-        forward();
-    }
-
-    if (!IR1 && !IR2 && IR3 && !IR4) // 0010
-    {
-        turnSlow(RIGHT);
-    }
-    
-    if (!IR1 && IR2 && !IR3 && !IR4) // 0100
-    {
-        turnSlow(LEFT);
-    }
-    }
-    TR1 = 0; /* Stop the timer */
-    /* calculate distance using timer */
-    distance = ((TL1 | (TH1 << 8)) * Clock_period * sound_velocity) / 2;
+    // while (!ECHO_PIN_CHECK)
+    //     ;    /* Waiting for Echo */
+    // TR1 = 1; /* Timer Starts */
+    // while (ECHO_PIN_CHECK && !TF1)
+    //     ;
+    // TR1 = 0; /* Stop the timer */
+    // /* calculate distance using timer */
+    // distance = ((TL1 | (TH1 << 8)) * Clock_period * sound_velocity) / 2;
 } /* Waiting for Echo goes LOW */
 
 /************************************************
@@ -149,14 +109,30 @@ void InterruptTimer0() __interrupt(1)
         EN2_OFF;
     }
 
-    if (sysTick - ultrasonic_timer >= 50) // 2HZ timer
+    if (sysTick - ultrasonic_timer >= 10 && ultrasonic_flag ==0) // 2HZ timer
     {
         ultrasonic_timer = sysTick;
         ultrasonic_flag = 1;
-
+    }
+    
+    if (ultrasonic_flag == 2 && !ECHO_PIN_CHECK)
+    {
+        TR1 = 1;
+        ultrasonic_flag == 3;
     }
 
-    TR0 = 1; // Resume Timer 0
+    if (ultrasonic_flag == 3 && ECHO_PIN_CHECK)
+    {
+        TR1 = 0;
+        ultrasonic_flag == 0;
+    }
+    
+    distance = ((TL1 | (TH1 << 8)) * Clock_period * sound_velocity) / 2;
+
+
+    TR0 = 1; // Start Timer 0
+
+
 }
 
 /************************************************
