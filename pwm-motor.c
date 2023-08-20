@@ -20,11 +20,42 @@ void getDistance(void)
     /* pull trigger pin LOW*/
     TRIGGER_PIN_OFF;
 
-    while (!ECHO_PIN_CHECK)
-        ;    /* Waiting for Echo */
+    while (!ECHO_PIN_CHECK){
+    if (!IR1 && !IR2 && !IR3 && !IR4) // 0000
+    {
+        forward();
+    }
+
+    if (!IR1 && !IR2 && IR3 && !IR4) // 0010
+    {
+        turnSlow(RIGHT);
+    }
+    
+    if (!IR1 && IR2 && !IR3 && !IR4) // 0100
+    {
+        turnSlow(LEFT);
+    }
+
+
+
+    }    /* Waiting for Echo */
     TR1 = 1; /* Timer Starts */
-    while (ECHO_PIN_CHECK && !TF1)
-        ;
+    while (ECHO_PIN_CHECK && !TF1){
+        if (!IR1 && !IR2 && !IR3 && !IR4) // 0000
+    {
+        forward();
+    }
+
+    if (!IR1 && !IR2 && IR3 && !IR4) // 0010
+    {
+        turnSlow(RIGHT);
+    }
+    
+    if (!IR1 && IR2 && !IR3 && !IR4) // 0100
+    {
+        turnSlow(LEFT);
+    }
+    }
     TR1 = 0; /* Stop the timer */
     /* calculate distance using timer */
     distance = ((TL1 | (TH1 << 8)) * Clock_period * sound_velocity) / 2;
@@ -118,10 +149,11 @@ void InterruptTimer0() __interrupt(1)
         EN2_OFF;
     }
 
-    if (sysTick - ultrasonic_timer >= 5000) // 2HZ timer
+    if (sysTick - ultrasonic_timer >= 50) // 2HZ timer
     {
         ultrasonic_timer = sysTick;
         ultrasonic_flag = 1;
+
     }
 
     TR0 = 1; // Resume Timer 0
