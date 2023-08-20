@@ -4,10 +4,7 @@ void getDistance(void)
 {
 
     /* pull trigger pin HIGH for 10 microsecond */
-    if (ultrasonic_flag==0){
-    TRIGGER_PIN_ON;
-    ultrasonic_flag=1;
-    }
+
     /* pull trigger pin LOW*/
 
     // while (!ECHO_PIN_CHECK)
@@ -107,14 +104,19 @@ void InterruptTimer0() __interrupt(1)
     {
         EN2_OFF;
     }
+    if (ultrasonic_flag == 0)
+    {
+        TRIGGER_PIN_ON;
+        ultrasonic_flag = 1;
+    }
 
-    if (sysTick - ultrasonic_timer >= 10 && ultrasonic_flag ==1) // 2HZ timer
+    if (sysTick - ultrasonic_timer >= 10 && ultrasonic_flag == 1) // 2HZ timer
     {
         ultrasonic_timer = sysTick;
         TRIGGER_PIN_OFF;
         ultrasonic_flag = 2;
     }
-    
+
     if (ultrasonic_flag == 2 && ECHO_PIN_CHECK)
     {
         TR1 = 1;
@@ -127,12 +129,8 @@ void InterruptTimer0() __interrupt(1)
         ultrasonic_flag == 0;
         distance = ((TL1 | (TH1 << 8)) * Clock_period * sound_velocity) / 2;
     }
-    
-
 
     TR0 = 1; // Start Timer 0
-
-
 }
 
 /************************************************
@@ -417,19 +415,19 @@ int main(void)
         else
             stop();
 
-        if (!ultrasonic_flag)
-        {
-            getDistance();
-        }
+        // if (!ultrasonic_flag)
+        // {
+        //     getDistance();
+        // }
 
         if (distance <= 10)
         {
             // stop();
-            bitclear(P1, 7);
+            bitclear(P1, 6);
         }
         else
         {
-            bitset(P1, 7);
+            bitset(P1, 6);
         }
         checkSensor();
         pushButton();
