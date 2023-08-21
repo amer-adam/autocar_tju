@@ -1,131 +1,34 @@
 #include "pwm-motor.h"
 
-void sonic(void)
+void getDistance(void)
 {
-    if (scount >= 1000)
-    {
-        P1_4 ^= 1;
-        if (ultrasonic_flag == 0)
-        {
-            ultrasonic_flag = 1;
-            P2_6 = 1; // 800 ms starts module once
-            time = (TH0 << 8) + TL0;
-        }
-        else if (ultrasonic_flag == 1)
-        {
-            if (((TH0 << 8) + TL0) - time > 10)
-            {
-                ultrasonic_flag = 2;
-                P2_6 = 0;
-            }
-        }
-        else if (ultrasonic_flag == 2 && P2_7 == 0)
-        {
-            ultrasonic_flag = 3;
-            P1_2 = 0;
-        }
-        else if (ultrasonic_flag == 3 && P2_7 == 1)
-        {
-            ultrasonic_flag = 4;
-            lcount = scount;
-        }
-        else if (ultrasonic_flag == 4 && P2_7 == 0)
-        {
-            ultrasonic_flag = 0;
-            scount = 0;
-            P1_5 = 0;
-        }
-        else if (ultrasonic_flag == 4 && scount - lcount > 2 && P2_7 == 1)
-        {
-            ultrasonic_flag = 0;
-            scount = 0;
-            P1_5 = 1;
-        }
-    }
-}
 
-// void getDistance(void)
-// {
+    /* pull trigger pin HIGH */
+    // char current;
+    // char count;
+    TRIGGER_PIN_ON;
 
-//     /* pull trigger pin HIGH */
-//     // char current;
-//     // char count;
+    /* provide 10uS Delay*/
+    TL1 = 0xF5;
+    TH1 = 0xFF;
+    TR1 = 1;
+    while (TF1 == 0)
+        ;
+    TR1 = 0;
+    TF1 = 0;
 
-//     /* provide 10uS Delay*/
-//     if (ultraultrasonic_flag_flag == 0)
-//     {
-//         TRIGGER_PIN_ON;
-//         TL1 = 0x0C;
-//         TH1 = 0xFE;
-//         TR1 = 1;
-//         time = (TL1 | (TH1 << 8));
-//         ultraultrasonic_flag_flag = 1;
-//         // P1 = 0xff;
-//         bitclear(P1, 1);
-//     }
-//     else if ((TL1 | (TH1 << 8)) - time > 10 && ultraultrasonic_flag_flag == 1)
-//     {
-//         TRIGGER_PIN_OFF;
-//         ultraultrasonic_flag_flag = 2;
-//         // P1 = 0xff;
-//         bitclear(P1, 2);
-//     }
-//     else if (ultraultrasonic_flag_flag == 2 && !P2_7)
-//     {
-//         ultraultrasonic_flag_flag = 3;
-//         // P1 = 0xff;
-//         bitclear(P1, 3);
-//     }
-//     else if (ultraultrasonic_flag_flag == 3 && P2_7)
-//     {
-//         time = (TL1 | (TH1 << 8));
-//         ultraultrasonic_flag_flag = 4;
-//         // P1 = 0xff;
-//         bitclear(P1, 4);
-//     }
-//     else if (ultraultrasonic_flag_flag == 4 && P2_7 && TF1 == 1)
-//     {
-//         TF1 = 0;
-//         ultraultrasonic_flag_flag = 0;
-//         TR1 = 0;
-//         // P1 = 0xff;
-//         bitclear(P1, 5);
-//         sysTick = 0;
-//         ultraultrasonic_flag_flag = 0;
-//         ultraultrasonic_flag_timer = 0;
-//         boost_enable_flag = 1;
-//         ultraultrasonic_flag_enable_flag = 0;
-//     }
-//     else if (ultraultrasonic_flag_flag == 4 && !P2_7 && TF1 == 0)
-//     {
-//         distance = (((TL1 | (TH1 << 8)) - time) * Clock_period * sound_velocity) / 2;
-//         TR1 = 0;
-//         // P1 = 0xff;
-//         sysTick = 0;
-//         ultraultrasonic_flag_flag = 0;
-//         ultraultrasonic_flag_timer = 0;
-//         boost_enable_flag = 1;
-//         ultraultrasonic_flag_enable_flag = 0;
-//         // bitclear(P1, 6);
-//     }
+    /* pull trigger pin LOW*/
+    TRIGGER_PIN_OFF;
 
-//     if ((sysTick > 1000))
-//     {
-//         bitflip(P1, 6);
-//         sysTick = 0;
-//     }
-//     // delayMs(200);
-//     // /* pull trigger pin LOW*/
-
-//     // while (!P2_7)
-//     //     ;    /* Waiting for Echo */
-//     // TR1 = 1; /* Timer Starts */
-//     // while (P2_7 && !TF1)
-//     //     ;
-//     // TR1 = 0; /* Stop the timer */
-//     // /* calculate distance using timer */
-//     // distance = ((TL1 | (TH1 << 8)) * Clock_period * sound_velocity) / 2;
-// } /* Waiting for Echo goes LOW */
+    while (!ECHO_PIN_CHECK)
+        ;    /* Waiting for Echo */
+    TR1 = 1; /* Timer Starts */
+    while (ECHO_PIN_CHECK && !TF1)
+        ;
+    TR1 = 0; /* Stop the timer */
+    /* calculate distance using timer */
+    distance = ((TL1 | (TH1 << 8)) * Clock_period * sound_velocity) / 2;
+} /* Waiting for Echo goes LOW */
 
 /************************************************
  * Initiliaze the Board
@@ -134,17 +37,17 @@ void boardInit(void)
 {
     TimerInit(); // Initialize timer to start generating interrupts
 
-    // P0 = 0xFF;
-    // P1 = 0xFF;
-    // P2 = 0xFF;
-    // P3 = 0xFF;
+    P0 = 0xFF;
+    P1 = 0xFF;
+    P2 = 0xFF;
+    P3 = 0xFF;
 
     autoflag = 1;
     sysTick = 0;
-    ultrasonic_flag = 0;
-    ultrasonic_enable_flag = 0;
+    ultrasonic_timer = 0;
     boost_enable_flag = 1;
-    // ultraultrasonic_flag_enable_flag = 0;
+    ultrasonic_enable_flag = 1;
+    ultrasonic_flag = 0;
     pwm_left = 0;
     pwm_right = 0;
     speedL = 0;
@@ -157,34 +60,22 @@ void boardInit(void)
 void TimerInit(void)
 {
     // Set Timer 0 mode to 16-bit
-    // TMOD &= 0x00; // Clear lower 4 bits
-    // TMOD |= 0x11; // Set the first bit to configure Timer 0 as a 16-bit timer (Mode 1)
+    TMOD &= 0x00; // Clear lower 4 bits
+    TMOD |= 0x11; // Set the first bit to configure Timer 0 as a 16-bit timer (Mode 1)
 
-    TMOD = 0x11;
     // Set initial values for Timer 0
-    // TL0 = 0xFA; // Low byte initial value
-    // TH0 = 0xFF; // High byte initial value
-
-    TH0 = 0xFE;
-    TL0 = 0xD3;
+    TL0 = 0xFA; // Low byte initial value
+    TH0 = 0xFF; // High byte initial value
 
     // Enable Timer 0 interrupt and global interrupt
     ET0 = 1; // Enable Timer 0 interrupt
     EA = 1;  // Enable global interrupts
 
-    // IT1 = 1; // Set INT1 to be edge-triggered (rising edge)
-    // EX1 = 1; // Enable External Interrupt 1
+    IT1 = 1; // Set INT1 to be edge-triggered (rising edge)
+    EX1 = 1; // Enable External Interrupt 1
 
     // Start Timer 0
     TR0 = 1; // Start Timer 0 by setting its run control bit
-
-    // TH1 = 0xFE;
-    // TL1 = 0xD3;
-    // TH0 = 0xFE;
-    // TL0 = 0x0C;
-    // EA = 1;
-    // ET1 = 1;
-    // TR1 = 1;
 }
 
 /************************************************
@@ -194,8 +85,9 @@ void TimerInit(void)
 void InterruptTimer0() __interrupt(1)
 {
     TR0 = 0; // Stop Timer 0
-    TH0 = 0xFE;
-    TL0 = 0xD3;
+
+    TL0 = 0xFC; // Load low byte of timer value
+    TH0 = 0xFF; // Load high byte of timer value
 
     pwm_left++;  // Increment pwm_left counter
     pwm_right++; // Increment pwm_right counter
@@ -205,11 +97,7 @@ void InterruptTimer0() __interrupt(1)
     {
         pwm_left = 0; // Reset pwm_left counter to 0
     }
-    // if (sysTick > 75)
-    // {
-    scount++;
-    // sysTick = 0;
-    // }
+
     if (pwm_left <= speedL)
     {
         EN1_ON;
@@ -233,33 +121,24 @@ void InterruptTimer0() __interrupt(1)
         EN2_OFF;
     }
 
-    // if ((sysTick - ultrasonic_enable_flag >= 10000)) // 2HZ timer
+    // if (sysTick - ultrasonic_timer >= 70000 && ultrasonic_enable_flag) // 2HZ timer
     // {
-    //     //     ultraultrasonic_flag_timer = sysTick;
-    //     //     ultraultrasonic_flag_enable_flag = 1;
-    //     // bitflip(P1, 7);
+    //     // ultrasonic_timer = sysTick;
+    //     ultrasonic_flag = 1;
     // }
 
-    // if ((sysTick - boost_timer <= 20000) && boost_enable_flag) // 2 sec boost at the start timer
-    // {
-    //     // ultraultrasonic_flag_timer = sysTick;
-    //     boost_flag = 1;
-    // }
-    // else
-    // {
-    //     boost_enable_flag = 0;
-    //     boost_flag = 0;
-    // }
+    if ((sysTick - boost_timer <= 20000) && boost_enable_flag) // 2 sec boost at the start timer
+    {
+        // ultrasonic_timer = sysTick;
+        boost_flag = 1;
+    }
+    else
+    {
+        boost_enable_flag = 0;
+        boost_flag = 0;
+    }
 
     TR0 = 1; // Resume Timer 0
-}
-
-/************************************************
- * External Interrupt 1 (INT1) handler
- * Used to handle ultraultrasonic_flag callback
- ************************************************/
-void External1_ISR() __interrupt(2)
-{
 }
 
 /************************************************
@@ -270,8 +149,8 @@ void forward(void)
 {
     if (boost_flag)
     {
-        speedL = 45;
-        speedR = 50;
+        speedL = 55;
+        speedR = 55;
     }
     else
     {
@@ -417,7 +296,7 @@ void lineFollow(void)
 
     if (!IR1 && !IR2 && !IR3 && IR4) // 0001
     {
-        delayMs(6);
+        delayMs(4);
 
         do
         {
@@ -455,7 +334,7 @@ void lineFollow(void)
 
     if (IR1 && !IR2 && !IR3 && !IR4) // 1000
     {
-        delayMs(6);
+        delayMs(4);
 
         do
         {
@@ -516,23 +395,34 @@ void pushButton(void)
     // }
 }
 
-// void DisplayNumber()
-// {
-//     // char buf[4];
-//     float n = 153.4;
-//     P2_3 = 0;
-//     P0 = num[1];
-//     P2_3 = 1;
-//     P2_0 = 0;
-//     P0 = num[2];
-//     P2_0 = 1;
-//     P2_1 = 0;
-//     P0 = num[3];
-//     P2_1 = 1;
-//     P2_2 = 0;
-//     P0 = num[4];
-//     P2_2 = 1;
-// }
+void evade_like_a_pro(void)
+{
+    P1 = 0x00;
+    autoflag = 0;
+    stop();
+    delayMs(2);
+
+    speedL = 96;
+    speedR = 20;
+
+    MOTOR_L_BACK;
+    MOTOR_R_GO;
+    delayMs(12);
+
+    speedL = 100;
+    speedR = 100;
+
+    MOTOR_L_BACK;
+    MOTOR_R_BACK;
+    delayMs(5);
+
+    speedL = 96;
+    speedR = 20;
+
+    MOTOR_L_BACK;
+    MOTOR_R_GO;
+    delayMs(12);
+}
 
 int main(void)
 {
@@ -540,32 +430,21 @@ int main(void)
 
     while (1)
     {
-        // if (autoflag)
-        //     lineFollow();
-        // else
-        //     stop();
+        if (autoflag)
+            lineFollow();
+        else
+            stop();
 
-        // if (ultraultrasonic_flag_enable_flag)
-        // {
-        //     autoflag = 0;
-        //     stop();
-        //     P1 = 0x00;
-        //     ultraultrasonic_flag_flag = 0;
-        // getDistance();
+        // stop();
 
-        // ultraultrasonic_flag_enable_flag = 0;
-        // }
-        sonic();
+        if (ultrasonic_flag)
+        {
 
-        // if (distance <= 10 && distance >= 2)
-        // {
-        //     P1 = 0x00;
-        // }
-        // else
-        // {
-        //     P1 = 0xFF;
-        // }
-        // checkSensor();
+            ultrasonic_flag = 0;
+            ultrasonic_enable_flag = 0;
+        }
+
+        checkSensor();
         pushButton();
     }
 }

@@ -88,7 +88,7 @@
  ************************************************/
 #define TRIGGER_PIN_ON bitset(P2, 6)
 #define TRIGGER_PIN_OFF bitclear(P2, 6)
-#define ECHO_PIN_CHECK bitcheck(P2, 7)
+#define ECHO_PIN_CHECK bitcheck(P3, 3)
 
 /************************************************
  * Global variables
@@ -108,10 +108,6 @@ unsigned int ultrasonic_timer;
 
 unsigned int boost_timer;
 
-int scount;
-int lcount;
-
-unsigned int time;
 unsigned short ultrasonic_flag;
 unsigned short ultrasonic_enable_flag;
 unsigned short boost_flag;
