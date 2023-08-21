@@ -1,0 +1,11 @@
+/.vscode
+/Makefile
+/pwm-motor.asm
+/pwm-motor.ihx
+/pwm-motor.lk
+/pwm-motor.lst
+/pwm-motor.map
+/pwm-motor.mem
+/pwm-motor.rel
+/pwm-motor.rst
+/pwm-motor.sym
