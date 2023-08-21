@@ -129,6 +129,8 @@ void InterruptTimer0() __interrupt(1)
         // ultrasonic_timer = sysTick;
         boost_flag = 1;
     }
+    else
+        boost_flag = 0;
 
     TR0 = 1; // Resume Timer 0
 }
@@ -424,11 +426,11 @@ int main(void)
         else
             stop();
 
-        if (ultrasonic_flag)
-        {
-            ultrasonic_flag = 0;
-            getDistance();
-        }
+        // if (ultrasonic_flag)
+        // {
+        //     ultrasonic_flag = 0;
+        //     getDistance();
+        // }
 
         if (distance <= 10)
         {
