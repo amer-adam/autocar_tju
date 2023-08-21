@@ -124,6 +124,12 @@ void InterruptTimer0() __interrupt(1)
         ultrasonic_flag = 1;
     }
 
+    if ((sysTick - boost_timer <= 20000)) // 2 sec boost at the start timer
+    {
+        // ultrasonic_timer = sysTick;
+        boost_flag = 1;
+    }
+
     TR0 = 1; // Resume Timer 0
 }
 
@@ -141,8 +147,17 @@ void External1_ISR() __interrupt(2)
  ************************************************/
 void forward(void)
 {
-    speedL = 25;
-    speedR = 25;
+    if (boost_flag)
+    {
+        speedL = 55;
+        speedR = 55;
+    }
+    else
+    {
+        speedL = 25;
+        speedR = 25;
+    }
+
     MOTOR_L_GO;
     MOTOR_R_GO;
 }

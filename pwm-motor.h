@@ -106,7 +106,11 @@ unsigned char pwm_right;
 unsigned int sysTick;
 unsigned int ultrasonic_timer;
 
+unsigned int boost_timer;
+
+
 unsigned short ultrasonic_flag;
+unsigned short boost_flag;
 unsigned short autoflag;
 
 typedef enum
