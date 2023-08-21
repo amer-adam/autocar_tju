@@ -111,6 +111,7 @@ unsigned int boost_timer;
 
 unsigned short ultrasonic_flag;
 unsigned short boost_flag;
+unsigned short boost_enable_flag;
 unsigned short autoflag;
 
 typedef enum

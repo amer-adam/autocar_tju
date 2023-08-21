@@ -42,9 +42,10 @@ void boardInit(void)
     P2 = 0xFF;
     P3 = 0xFF;
 
-    autoflag = 0;
+    autoflag = 1;
     sysTick = 0;
     ultrasonic_timer = 0;
+    boost_enable_flag = 1;
     pwm_left = 0;
     pwm_right = 0;
     speedL = 0;
@@ -124,13 +125,16 @@ void InterruptTimer0() __interrupt(1)
         ultrasonic_flag = 1;
     }
 
-    if ((sysTick - boost_timer <= 20000)) // 2 sec boost at the start timer
+    if ((sysTick - boost_timer <= 20000) && boost_enable_flag) // 2 sec boost at the start timer
     {
         // ultrasonic_timer = sysTick;
         boost_flag = 1;
     }
     else
+    {
+        boost_enable_flag = 0;
         boost_flag = 0;
+    }
 
     TR0 = 1; // Resume Timer 0
 }
