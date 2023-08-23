@@ -156,7 +156,7 @@ void InterruptTimer1() __interrupt(3)
     {
         EN2_OFF;
     }
-    TR1 = 1; // Resume Timer 0
+
 }
 
 /************************************************
@@ -451,7 +451,6 @@ int main(void)
             evade();
             evade_flag = 0;
         }
-
         checkSensor();
         pushButton();
     }
