@@ -2,7 +2,7 @@
 
 void sonic(void)
 {
-    if (scount >= 3000)
+    if (scount >= 750)
     {
         P1_4 ^= 1;
         if (ultrasonic_flag == 0)
@@ -22,7 +22,7 @@ void sonic(void)
         else if (ultrasonic_flag == 2 && !ECHO_PIN_CHECK)
         {
             ultrasonic_flag = 3;
-            P1_2 = 0;
+            // P1_2 = 0;
         }
         else if (ultrasonic_flag == 3 && ECHO_PIN_CHECK)
         {
@@ -33,7 +33,12 @@ void sonic(void)
         {
             ultrasonic_flag = 0;
             scount = 0;
-            P1_5 = 0;
+            P1 = 0x00;
+            ultrasonic_enable_flag = 0;
+            TR0 = 0;
+            // autoflag = 0;
+            // stop();
+            evade_flag = 1;
         }
         else if (ultrasonic_flag == 4 && scount - lcount > 2 && ECHO_PIN_CHECK)
         {
@@ -56,7 +61,7 @@ void boardInit(void)
     P2 = 0xFF;
     P3 = 0xFF;
 
-    autoflag = 1;
+    autoflag = 0;
     sysTick = 0;
     ultrasonic_flag = 0;
     ultrasonic_enable_flag = 0;
@@ -65,6 +70,7 @@ void boardInit(void)
     pwm_right = 0;
     speedL = 0;
     speedR = 0;
+    
 }
 
 /************************************************
@@ -108,6 +114,10 @@ void InterruptTimer0() __interrupt(1)
     // TR0 = 1; // Resume Timer 0
 }
 
+/************************************************
+ * Timer 1 Callback
+ * Used to generate pwm signals
+ ************************************************/
 void InterruptTimer1() __interrupt(3)
 {
     TR1 = 0; // Stop Timer 0
@@ -119,23 +129,33 @@ void InterruptTimer1() __interrupt(3)
     // sysTick++;   // Increment sysTick counter
     // scount++;
 
-    // if ((sysTick - ultrasonic_enable_flag >= 10000)) // 2HZ timer
-    // {
-    //     //     ultraultrasonic_flag_timer = sysTick;
-    //     //     ultraultrasonic_flag_enable_flag = 1;
-    //     // bitflip(P1, 7);
-    // }
+    if (pwm_left >= 100) // Check if pwm_left has reached 100
+    {
+        pwm_left = 0; // Reset pwm_left counter to 0
+    }
 
-    // if ((sysTick - boost_timer <= 20000) && boost_enable_flag) // 2 sec boost at the start timer
-    // {
-    //     // ultraultrasonic_flag_timer = sysTick;
-    //     boost_flag = 1;
-    // }
-    // else
-    // {
-    //     boost_enable_flag = 0;
-    //     boost_flag = 0;
-    // }
+    if (pwm_left <= speedL)
+    {
+        EN1_ON;
+    }
+    else
+    {
+        EN1_OFF;
+    }
+
+    if (pwm_right >= 100) // Check if pwm_right has reached 100
+    {
+        pwm_right = 0; // Reset pwm_right counter to 0
+    }
+
+    if (pwm_right <= speedR)
+    {
+        EN2_ON;
+    }
+    else
+    {
+        EN2_OFF;
+    }
     TR1 = 1; // Resume Timer 0
 }
 
@@ -152,8 +172,8 @@ void forward(void)
     }
     else
     {
-        speedL = 25;
-        speedR = 25;
+        speedL = 23;
+        speedR = 23;
     }
 
     MOTOR_L_GO;
@@ -210,13 +230,13 @@ void turnSlow(CAR_DIRECTION_t d)
     if (d == RIGHT)
     {
         speedL = 30;
-        speedR = 90;
+        speedR = 80;
         MOTOR_L_BACK;
         MOTOR_R_GO;
     }
     else if (d == LEFT)
     {
-        speedL = 90;
+        speedL = 80;
         speedR = 30;
         MOTOR_L_GO;
         MOTOR_R_BACK;
@@ -294,7 +314,7 @@ void lineFollow(void)
 
     if (!IR1 && !IR2 && !IR3 && IR4) // 0001
     {
-        delayMs(6);
+        delayMs(50);
 
         do
         {
@@ -315,16 +335,6 @@ void lineFollow(void)
         } while (!IR2);
     }
 
-    // if (!IR1 && IR2 && !IR3 && IR4) // 0101
-    // {
-    //     delayMs(610);
-
-    //     do
-    //     {
-    //         turnSlow(RIGHT);
-    //     } while (!IR1);
-    // }
-
     if (!IR1 && IR2 && !IR3 && !IR4) // 0100
     {
         turnSlow(LEFT);
@@ -332,7 +342,7 @@ void lineFollow(void)
 
     if (IR1 && !IR2 && !IR3 && !IR4) // 1000
     {
-        delayMs(6);
+        delayMs(50);
 
         do
         {
@@ -351,15 +361,6 @@ void lineFollow(void)
             turnSlow(LEFT);
         } while (!IR3);
     }
-    // if (IR1 && !IR2 && IR3 && !IR4) // 1010
-    // {
-    //     delayMs(100);
-
-    //     do
-    //     {
-    //         turnSlow(LEFT);
-    //     } while (!IR4);
-    // }
     if (IR1 && IR2 && IR3 && IR4) // 1111
     {
         stop();
@@ -374,9 +375,13 @@ void pushButton(void)
 {
     if (!K1)
     {
+        autoflag = 1;
+
         while (!K1)
             ;
-        autoflag = 1;
+        nitro();
+        delayMs(200);
+        ultrasonic_enable_flag = 1;
     }
     if (!K2)
     {
@@ -393,78 +398,61 @@ void pushButton(void)
     // }
 }
 
-void loop()
+/************************************************
+ * Push Buttons controll
+ * Must be called in the main while loop
+ ************************************************/
+void evade(void)
 {
-    if (pwm_left >= 100) // Check if pwm_left has reached 100
+    P1 = 0x00;
+    autoflag = 0;
+    // stop();
+    // delayMs(2);
+    //
+    speedR = 100;
+    speedL = 20;
+
+    MOTOR_R_BACK;
+    MOTOR_L_GO;
+    delayMs(295);
+
+    speedR = 100;
+    speedL = 100;
+
+    MOTOR_L_BACK;
+    MOTOR_R_BACK;
+    delayMs(100);
+
+    speedR = 100;
+    speedL = 20;
+
+    while (!IR3 && !IR4)
     {
-        pwm_left = 0; // Reset pwm_left counter to 0
+        MOTOR_R_BACK;
+        MOTOR_L_GO;
     }
 
-    if (pwm_left <= speedL)
-    {
-        EN1_ON;
-    }
-    else
-    {
-        EN1_OFF;
-    }
-
-    if (pwm_right >= 100) // Check if pwm_right has reached 100
-    {
-        pwm_right = 0; // Reset pwm_right counter to 0
-    }
-
-    if (pwm_right <= speedR)
-    {
-        EN2_ON;
-    }
-    else
-    {
-        EN2_OFF;
-    }
+    autoflag = 1;
+    P1 = 0xFF;
 }
-
-// void DisplayNumber()
-// {
-//     // char buf[4];
-//     float n = 153.4;
-//     P2_3 = 0;
-//     P0 = num[1];
-//     P2_3 = 1;
-//     P2_0 = 0;
-//     P0 = num[2];
-//     P2_0 = 1;
-//     P2_1 = 0;
-//     P0 = num[3];
-//     P2_1 = 1;
-//     P2_2 = 0;
-//     P0 = num[4];
-//     P2_2 = 1;
-// }
 
 int main(void)
 {
     boardInit();
-
     while (1)
     {
-        // if (autoflag)
-        lineFollow();
-        // else
-        //     stop();
+        if (autoflag)
+            lineFollow();
 
-        loop();
-        sonic();
+        if (ultrasonic_enable_flag)
+            sonic();
+        if (evade_flag)
+        {
+            evade();
+            evade_flag = 0;
+        }
 
-        // if (distance <= 10 && distance >= 2)
-        // {
-        //     P1 = 0x00;
-        // }
-        // else
-        // {
-        //     P1 = 0xFF;
-        // }
-        // checkSensor();
-        // pushButton();
+        checkSensor();
+        pushButton();
     }
 }

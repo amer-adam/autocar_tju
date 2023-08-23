@@ -110,6 +110,9 @@ unsigned int boost_timer;
 
 int scount;
 int lcount;
+int time1;
+
+int evade_flag;
 
 unsigned int time;
 unsigned short ultrasonic_flag;
@@ -140,7 +143,7 @@ typedef union
     } flag;
 } sys_t;
 
-sys_t sys;
+sys_t sysy;
 
 unsigned char num[] = {0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82,
                        0xf8, 0x80, 0x90};
@@ -159,5 +162,6 @@ void turnSlow(CAR_DIRECTION_t d);
 void delayMs(unsigned int i);
 void checkSensor(void);
 void lineFollow(void);
+void evade(void);
 
 #endif // PWM_MOTOR_H
